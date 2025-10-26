@@ -1,0 +1,261 @@
+name: Centinel Prod CI
+
+on:
+  push:
+    branches: [main]
+
+env:
+  NODE_ENV: production
+  APP_NAME: centinel-prod
+  NGINX_CONFIG_PATH: /etc/nginx/sites-enabled/centinel
+  APP_DOMAIN: centinel.algalib.me
+  HEALTH_CHECK_END_POINT: /api/v1/health
+  DEPLOY_DIRECTORY: '~/deploy/centinel-prod'
+
+  DOCKER_USER: ${{ secrets.DOCKER_HUB_USER }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+  HOST: ${{ secrets.PROD_HOST_BD }}
+  USER: ${{ secrets.PROD_USER_BD }}
+  SSH_KEY: ${{ secrets.PROD_SSH_KEY_BD }}
+
+jobs:
+  Build:
+    # runs-on: self-hosted
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Process and Load Environment Variables
+        run: |
+          echo "📝 Loading env vars from secret into memory"
+          echo "${{ secrets.PRODUCTION_ENV_VARS }}" | awk 'BEGIN {FS=": "; OFS="="} $1 && NF==2 {gsub(/ /, "", $1); print $1 "=\"" $2 "\"" }' | while read line; do
+            export $line
+          done
+
+          envsubst "`printf '${%s} ' $(sh -c "env|cut -d'=' -f1")`" < ./environments/prod.example.env > ./environments/$NODE_ENV.env
+          echo "Contents of ./environments/$NODE_ENV.env:"
+          cat ./environments/$NODE_ENV.env
+
+          envsubst < docker-compose.template.yml > docker-compose.yml
+          echo "Contents of docker-compose.yml:"
+          cat docker-compose.yml
+
+      - name: Log in to Docker Hub
+        run: docker login -u ${{env.DOCKER_USER}} -p ${{env.DOCKER_PASSWORD}}
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag ${{env.DOCKER_USER}}/${{env.APP_NAME}}:latest
+      - name: Docker Push
+        run: docker push ${{env.DOCKER_USER}}/${{env.APP_NAME}}:latest
+
+      - name: Ensure Docker Compose, Infra Folder, Env File Exist
+        run: |
+          if [ ! -f environments/${{env.NODE_ENV}}.env ]; then
+            echo "File environments/${{env.NODE_ENV}}.env does not exist."
+            exit 1
+          fi
+          if [ ! -f docker-compose.yml ]; then
+            echo "File docker-compose.yml does not exist."
+            exit 1
+          fi
+      - name: Transfer Docker Compose, Env File
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.USER }}
+          key: ${{ env.SSH_KEY }}
+          source: 'environments,docker-compose.yml'
+          target: '~/deploy/${{env.APP_NAME}}'
+
+      - name: Zero Downtime Deploy to DigitalOcean
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.USER }}
+          key: ${{ env.SSH_KEY }}
+          script: |
+            set -e
+
+            echo "🚀 Starting Zero Downtime Deployment"
+            echo "📍 Deploy directory: ${{ env.DEPLOY_DIRECTORY }}"
+
+            cd ${{ env.DEPLOY_DIRECTORY }}
+
+            echo "📂 List files in environments directory:"
+            ls -la ./environments
+
+            # echo "🔍 Checking ${{env.NODE_ENV}}.env..."
+            # cat environments/${{env.NODE_ENV}}.env
+
+            # Load env file to get ports
+            if [ ! -f environments/${{env.NODE_ENV}}.env ]; then
+              echo "❌ environments/${{env.NODE_ENV}}.env not found!"
+              exit 1
+            fi
+            source environments/${{env.NODE_ENV}}.env
+
+            echo "🔁 Ports Loaded from .env:"
+            echo "PRIMARY_PORT=$PRIMARY_PORT"
+            echo "SECONDARY_PORT=$SECONDARY_PORT"
+
+            # Configuration
+            PRIMARY_PORT=$PRIMARY_PORT
+            SECONDARY_PORT=$SECONDARY_PORT
+            REDIS_PRIMARY_PORT=$REDIS_PRIMARY_PORT
+            REDIS_SECONDARY_PORT=$REDIS_SECONDARY_PORT
+            MAX_HEALTH_CHECK_ATTEMPTS=80
+            HEALTH_CHECK_INTERVAL=5
+
+            docker login -u ${{ env.DOCKER_USER }} -p ${{ env.DOCKER_PASSWORD }}
+
+            docker pull ${{ env.DOCKER_USER }}/${{ env.APP_NAME }}:latest
+
+            # Find current port from Nginx
+            CURRENT_PORT=$(grep -oP '(?<=proxy_pass http://127.0.0.1:)\d+' ${{ env.NGINX_CONFIG_PATH }} 2>/dev/null || echo "")
+            if [ -z "$CURRENT_PORT" ]; then
+              echo "❌ Could not detect CURRENT_PORT from Nginx config. Aborting."
+              exit 1
+            fi
+
+            # Determine new port
+            if [ "$CURRENT_PORT" = $PRIMARY_PORT ]; then
+              NEW_PORT=$SECONDARY_PORT
+              OLD_CONTAINER=${{env.APP_NAME}}-$PRIMARY_PORT
+              NEW_CONTAINER=${{env.APP_NAME}}-$SECONDARY_PORT
+              # IF ANOTHER PORTS ARE AVAILABLE THEN USE HERE
+              REDIS_PORT=$REDIS_SECONDARY_PORT
+
+            else
+              NEW_PORT=$PRIMARY_PORT
+              OLD_CONTAINER=${{env.APP_NAME}}-$SECONDARY_PORT
+              NEW_CONTAINER=${{env.APP_NAME}}-$PRIMARY_PORT
+              # IF ANOTHER PORTS ARE AVAILABLE THEN USE HERE
+              REDIS_PORT=$REDIS_PRIMARY_PORT
+            fi
+
+            echo "📦 Searching for compose file that uses current port $CURRENT_PORT"
+            BASE_COMPOSE_FILE=$(grep -rl "$CURRENT_PORT:" --include="*.yml" | head -n 1)
+
+            if [ -z "$BASE_COMPOSE_FILE" ]; then
+              echo "❌ Could not find any compose file using port $CURRENT_PORT. Aborting."
+              exit 1
+            fi
+
+            echo "✅ Found base compose file: $BASE_COMPOSE_FILE"
+
+            COMPOSE_FILE=docker-compose-${NEW_PORT}.yml
+
+            echo "🔄 Creating new compose file: $COMPOSE_FILE from $BASE_COMPOSE_FILE"
+            cp $BASE_COMPOSE_FILE $COMPOSE_FILE
+
+
+            sed -i -E "s/-[[:space:]]*['\"]?[0-9]+:$PRIMARY_PORT['\"]?/- '$NEW_PORT:$PRIMARY_PORT'/g" "$COMPOSE_FILE"
+            sed -i -E "s/-[[:space:]]*['\"]?[0-9]+:$SECONDARY_PORT['\"]?/- '$NEW_PORT:$SECONDARY_PORT'/g" "$COMPOSE_FILE"
+            sed -i -E "s/-[[:space:]]*['\"]?[0-9]+:6379['\"]?/- '$REDIS_PORT:$REDIS_SECONDARY_PORT'/g" "$COMPOSE_FILE"
+            sed -i -E "s/-[[:space:]]*['\"]?[0-9]+:6379['\"]?/- '$REDIS_PORT:$REDIS_PRIMARY_PORT'/g" "$COMPOSE_FILE"
+            sed -i "s/container_name: .*/container_name: $NEW_CONTAINER/g" "$COMPOSE_FILE"
+            sudo sed -i "s/^[[:space:]]*\${DOCKER_SERVICE_NAME}:/$NEW_CONTAINER:/g" "$COMPOSE_FILE"
+
+            echo "✅ Compose file for new deployment created: $COMPOSE_FILE"
+            cat $COMPOSE_FILE
+
+            echo "🚀🚀 Starting new container: $NEW_CONTAINER on port $NEW_PORT"
+            # If container already exists, stop and remove it
+            if docker ps -q -f name="$NEW_CONTAINER" | grep -q .; then
+              echo "🛑 Container $NEW_CONTAINER already exists. Stopping it first."
+              docker stop "$NEW_CONTAINER" || true
+              docker rm "$NEW_CONTAINER" || true
+            fi
+            docker compose -p ${{env.APP_NAME}}-${NEW_PORT} --env-file environments/${{env.NODE_ENV}}.env -f $COMPOSE_FILE up -d
+
+            echo "⏳ Waiting 10s for container to initialize..."
+            sleep 10
+
+            echo "🏥 Health checking new container at port $NEW_PORT"
+            for ((i = 1; i <= MAX_HEALTH_CHECK_ATTEMPTS; i++)); do
+              if curl -sSf --connect-timeout 5 http://localhost:$NEW_PORT${{env.HEALTH_CHECK_END_POINT}} > /dev/null; then
+                echo "✅ Health check passed"
+                break
+              elif [ $i -eq $MAX_HEALTH_CHECK_ATTEMPTS ]; then
+                echo "❌ Health check failed after $MAX_HEALTH_CHECK_ATTEMPTS attempts. Exiting..."
+                docker compose -f $COMPOSE_FILE down
+                rm -f $COMPOSE_FILE
+                exit 1
+              else
+                echo "Retrying health check... ($i/$MAX_HEALTH_CHECK_ATTEMPTS)"
+                sleep 10
+              fi
+            done
+
+            echo "🔄 Updating Nginx to route to new port $NEW_PORT"
+            sudo cp ${{ env.NGINX_CONFIG_PATH }} ${{ env.NGINX_CONFIG_PATH }}.bak
+            sudo sed -i "s/proxy_pass http:\/\/127.0.0.1:$CURRENT_PORT;/proxy_pass http:\/\/127.0.0.1:$NEW_PORT;/g" ${{ env.NGINX_CONFIG_PATH }}
+
+            echo "🔍 Testing Nginx config"
+            if ! sudo nginx -t; then
+              echo "❌ Nginx config invalid, restoring..."
+              sudo cp ${{ env.NGINX_CONFIG_PATH }}.bak ${{ env.NGINX_CONFIG_PATH }}
+              docker compose -f $COMPOSE_FILE down
+              rm -f $COMPOSE_FILE
+              exit 1
+            fi
+
+            echo "🔄 Reloading Nginx"
+            sudo nginx -s reload
+            sleep 5
+
+            echo "🧪 Verifying Nginx is serving new app"
+            if curl -sSf https://${{ env.APP_DOMAIN }}${{env.HEALTH_CHECK_END_POINT}} > /dev/null; then
+              echo "✅ New deployment accessible via Nginx"
+            else
+              echo "⚠️ New deployment not accessible via Nginx, but continuing..."
+            fi
+
+             # Cleanup old deployment
+            echo "🧹 Cleaning up old deployment..."
+
+            # Stop and remove old container
+            if docker ps -q -f name="$OLD_CONTAINER" | grep -q .; then
+              echo "🛑 Stopping old container: $OLD_CONTAINER"
+              docker stop "$OLD_CONTAINER" || true
+            fi
+
+            if docker ps -aq -f name="$OLD_CONTAINER" | grep -q .; then
+              echo "🗑️ Removing old container: $OLD_CONTAINER"
+              docker rm "$OLD_CONTAINER" || true
+            fi
+
+            # Clean up old compose project
+            OLD_PROJECT_NAME="${{env.APP_NAME}}-${CURRENT_PORT}"
+            echo "🧹 Cleaning up old compose project: $OLD_PROJECT_NAME"
+            docker compose -p "$OLD_PROJECT_NAME" down --remove-orphans || true
+
+            # Remove old compose file if different from base
+            if [ "$BASE_COMPOSE_FILE" != "docker-compose.yml" ] && [ -f "$BASE_COMPOSE_FILE" ]; then
+              echo "🗑️ Removing old compose file: $BASE_COMPOSE_FILE"
+              rm -f "$BASE_COMPOSE_FILE"
+            fi
+
+            # Clean up backup files
+            rm -f "${{ env.NGINX_CONFIG_PATH }}.bak" 
+
+            # Docker cleanup
+            echo "🧹 Cleaning up Docker resources..."
+            docker image prune -f --filter "dangling=true"
+            docker system prune -f --filter "until=1h"
+
+            # Final status report
+            echo ""
+            echo "🎉 ============================================="
+            echo "✅ DEPLOYMENT COMPLETED SUCCESSFULLY"
+            echo "============================================="
+            echo "📦 Container: $NEW_CONTAINER"
+            echo "🌐 Port: $NEW_PORT"
+            echo "📊 Redis: $REDIS_PORT"
+            echo "============================================="
+
+            # Show running containers for verification
+            echo "📋 Current running containers:"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep ${{env.APP_NAME}} || true
