@@ -14,7 +14,6 @@ import { gen6digitOTP } from '@src/shared';
 import * as Crypto from 'crypto';
 import { firstValueFrom } from 'rxjs';
 import { DataSource } from 'typeorm';
-import { EmailQueueService } from '../../queues/services/email-queue.service';
 import { User } from '../../user/entities/user.entity';
 import { UserRoleService } from '../../user/services/userRole.service';
 import {
@@ -43,8 +42,7 @@ export class AuthService {
     private readonly jwtHelper: JWTHelper,
     private readonly bcryptHelper: BcryptHelper,
     private readonly dataSource: DataSource,
-    private readonly http: HttpService,
-    private readonly emailQueueService: EmailQueueService
+    private readonly http: HttpService
   ) {}
   async googleAuthRequest(query: GoogleAuthRequestDTO): Promise<string> {
     const { webRedirectUrl } = query;
@@ -90,20 +88,20 @@ export class AuthService {
 
   async resetPassword(payload: ResetPasswordDTO): Promise<SuccessResponse> {
     const { email } = payload;
-    const user = await this.userService.isExist({ email });
+    // const user = await this.userService.isExist({ email });
 
     const otp = gen6digitOTP();
     const hash = this.jwtHelper.generateOtpHash(email, otp);
 
     // Queue password reset email
-    await this.emailQueueService.queuePasswordResetEmail(
-      email,
-      user.firstName || 'User',
-      otp,
-      undefined, // resetUrl can be added if needed
-      5, // 5 minutes expiration
-      { priority: 1 } // High priority for password reset
-    );
+    // await this.emailQueueService.queuePasswordResetEmail(
+    //   email,
+    //   user.firstName || 'User',
+    //   otp,
+    //   undefined, // resetUrl can be added if needed
+    //   5, // 5 minutes expiration
+    //   { priority: 1 } // High priority for password reset
+    // );
 
     return new SuccessResponse(`OTP sent to ${email}. Please check your email.`, {
       email,
@@ -162,12 +160,12 @@ export class AuthService {
     });
 
     // Queue welcome email
-    await this.emailQueueService.queueWelcomeEmail(
-      user.email,
-      `${user.firstName} ${user.lastName}`.trim() || 'User',
-      undefined, // verificationUrl can be added if needed
-      { priority: 2 } // Medium priority for welcome email
-    );
+    // await this.emailQueueService.queueWelcomeEmail(
+    //   user.email,
+    //   `${user.firstName} ${user.lastName}`.trim() || 'User',
+    //   undefined, // verificationUrl can be added if needed
+    //   { priority: 2 } // Medium priority for welcome email
+    // );
 
     return new SuccessResponse('User registered successfully. Please login', loginRes?.data);
   }

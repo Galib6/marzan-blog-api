@@ -63,43 +63,23 @@ const envSchema = Joi.object({
   OTP_EXPIRES_IN: Joi.number().default(5000),
 
   //smtp
-  SMTP_HOST: Joi.string().required(),
-  SMTP_PORT: Joi.string().required(),
-  SMTP_USERNAME: Joi.string().required(),
-  SMTP_PASSWORD: Joi.string().required(),
+  // SMTP_HOST: Joi.string().required(),
+  // SMTP_PORT: Joi.string().required(),
+  // SMTP_USERNAME: Joi.string().required(),
+  // SMTP_PASSWORD: Joi.string().required(),
 
-  REDIS_HOST: Joi.string().required(),
-  REDIS_PORT: Joi.string().required(),
-  REDIS_USERNAME: Joi.string().allow(''),
-  REDIS_PASSWORD: Joi.string().optional(),
-  REDIS_TLS: Joi.string().required(),
+  // REDIS_HOST: Joi.string().required(),
+  // REDIS_PORT: Joi.string().required(),
+  // REDIS_USERNAME: Joi.string().allow(''),
+  // REDIS_PASSWORD: Joi.string().optional(),
+  // REDIS_TLS: Joi.string().required(),
 
   SEED_SUPER_ADMIN_EMAIL: Joi.string().required(),
   SEED_SUPER_ADMIN_PASSWORD: Joi.string().required(),
 
-  GOOGLE_CLIENT_ID: Joi.string().required(),
-  GOOGLE_SECRET: Joi.string().required(),
-  GOOGLE_REDIRECT_URL: Joi.string().required(),
-
-  KAFKA_CLIENT_ID: Joi.string().required(),
-  KAFKA_BROKER: Joi.string().required(),
-  KAFKA_GROUP_ID: Joi.string().required(),
-  KAFKA_ENABLED: Joi.string().required(),
-  KAFKA_USERNAME: Joi.string().when('KAFKA_ENABLED', {
-    is: 'true',
-    then: Joi.required(),
-    otherwise: Joi.optional(),
-  }),
-  KAFKA_PASSWORD: Joi.string().when('KAFKA_ENABLED', {
-    is: 'true',
-    then: Joi.required(),
-    otherwise: Joi.optional(),
-  }),
-  KAFKA_SASL_MECHANISM: Joi.string().when('KAFKA_ENABLED', {
-    is: 'true',
-    then: Joi.valid('plain', 'scram-sha-256', 'scram-sha-512').default('plain'),
-    otherwise: Joi.optional(),
-  }),
+  // GOOGLE_CLIENT_ID: Joi.string().required(),
+  // GOOGLE_SECRET: Joi.string().required(),
+  // GOOGLE_REDIRECT_URL: Joi.string().required(),
 }).unknown(true);
 
 // Validate process.env

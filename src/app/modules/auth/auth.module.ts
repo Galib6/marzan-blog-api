@@ -1,11 +1,8 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { ClientsModule } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GoogleOAuthGuard } from '@src/app/modules/auth/guards/googleAuth/google.guard';
-import { grpcClientsConfig } from '@src/gRPC/grpc.config';
 import { HelpersModule } from '../../helpers/helpers.module';
-import { QueueModule } from '../queues/queue.module';
 import { AclModule } from './../acl/acl.module';
 import { UserModule } from './../user/user.module';
 import { AuthController } from './controllers/auth.controller';
@@ -21,14 +18,7 @@ const services = [AuthStatService, AuthService, GoogleStrategy];
 const subscribers = [];
 const controllers = [AuthController];
 const webControllers = [WebAuthController, AuthGrpcController];
-const modules = [
-  HttpModule,
-  HelpersModule,
-  UserModule,
-  AclModule,
-  QueueModule,
-  ClientsModule.register(grpcClientsConfig),
-];
+const modules = [HttpModule, HelpersModule, UserModule, AclModule];
 const guards = [GoogleOAuthGuard];
 
 @Module({
