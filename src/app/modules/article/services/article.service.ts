@@ -1,10 +1,10 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { BaseService } from "@src/app/base/base.service";
-import { In, Repository } from "typeorm";
-import { CategoryService } from "../../category/services/category.service";
-import { UpdateArticleDTO } from "../dtos/update.dto";
-import { Article } from "../entities/article.entity";
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { BaseService } from '@src/app/base/base.service';
+import { In, Repository } from 'typeorm';
+import { CategoryService } from '../../category/services/category.service';
+import { UpdateArticleDTO } from '../dtos/update.dto';
+import { Article } from '../entities/article.entity';
 
 @Injectable()
 export class ArticleService extends BaseService<Article> {
@@ -17,16 +17,16 @@ export class ArticleService extends BaseService<Article> {
     super(_repo);
   }
 
-  async updateOne(id: number, payload: UpdateArticleDTO): Promise<Article> {
+  async updateOne(id: string, payload: UpdateArticleDTO): Promise<Article> {
     const { categories, ...restPayload } = payload;
 
     // Fetch the existing article
     const article = await this.repo.findOne({
       where: { id },
-      relations: ["categories"],
+      relations: ['categories'],
     });
     if (!article) {
-      throw new Error("Article not found");
+      throw new Error('Article not found');
     }
 
     Object.assign(article, restPayload);

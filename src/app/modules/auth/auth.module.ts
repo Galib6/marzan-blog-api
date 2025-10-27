@@ -6,7 +6,6 @@ import { HelpersModule } from '../../helpers/helpers.module';
 import { AclModule } from './../acl/acl.module';
 import { UserModule } from './../user/user.module';
 import { AuthController } from './controllers/auth.controller';
-import { AuthGrpcController } from './controllers/auth.grpc.controller';
 import { WebAuthController } from './controllers/auth.web.controller';
 import { AuthStat } from './entities/authStat.entity';
 import { AuthService } from './services/auth.service';
@@ -17,7 +16,7 @@ const entities = [AuthStat];
 const services = [AuthStatService, AuthService, GoogleStrategy];
 const subscribers = [];
 const controllers = [AuthController];
-const webControllers = [WebAuthController, AuthGrpcController];
+const webControllers = [WebAuthController];
 const modules = [HttpModule, HelpersModule, UserModule, AclModule];
 const guards = [GoogleOAuthGuard];
 

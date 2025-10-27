@@ -1,3 +1,3 @@
-import { BaseFilterDTO } from "@src/app/base/baseFilter.dto";
+import { BaseFilterDTO } from '@src/app/base/baseFilter.dto';
 
 export class FilterArticleDTO extends BaseFilterDTO {}

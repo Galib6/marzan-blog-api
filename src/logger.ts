@@ -1,19 +1,15 @@
 import { Injectable, LoggerService, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import pino from 'pino';
 import { ENV } from './env';
 
 interface ILoggerConfig {
-  enableLoki?: boolean;
-  lokiConfig?: {
-    host: string;
-    batchingEnabled?: boolean;
-    batchInterval?: number;
-    labels?: Record<string, string>;
-    basicAuth?: string;
-  };
   fileRotation?: {
     maxSize?: string;
     maxFiles?: number;
+    frequency?: 'daily' | 'hourly';
+    retentionDays?: number; // Auto-delete logs older than this
   };
   logLevel?: string;
 }
@@ -22,6 +18,7 @@ interface ILoggerConfig {
 class LoggerManager {
   private static instance: LoggerManager;
   private loggers: Map<string, pino.Logger> = new Map();
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   private constructor() {}
 
@@ -43,6 +40,10 @@ class LoggerManager {
   }
 
   clearLoggers(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
     this.loggers.clear();
   }
 
@@ -50,24 +51,93 @@ class LoggerManager {
     return this.loggers.size;
   }
 
+  /**
+   * Schedule automatic cleanup of old log files
+   * @param logFolder - Directory containing log files
+   * @param retentionDays - Number of days to keep logs
+   */
+  private scheduleLogCleanup(logFolder: string, retentionDays: number): void {
+    // Run cleanup once on initialization
+    this.cleanupOldLogs(logFolder, retentionDays);
+
+    // Schedule cleanup to run daily at 2 AM (or every 24 hours)
+    if (!this.cleanupInterval) {
+      this.cleanupInterval = setInterval(
+        () => {
+          this.cleanupOldLogs(logFolder, retentionDays);
+        },
+        24 * 60 * 60 * 1000
+      ); // Run every 24 hours
+    }
+  }
+
+  /**
+   * Delete log files older than retention period
+   * @param logFolder - Directory containing log files
+   * @param retentionDays - Number of days to keep logs
+   */
+  private cleanupOldLogs(logFolder: string, retentionDays: number): void {
+    try {
+      if (!fs.existsSync(logFolder)) {
+        return;
+      }
+
+      const now = Date.now();
+      const retentionMs = retentionDays * 24 * 60 * 60 * 1000;
+      const files = fs.readdirSync(logFolder);
+
+      let deletedCount = 0;
+      let deletedSize = 0;
+
+      files.forEach((file) => {
+        const filePath = path.join(logFolder, file);
+        const stats = fs.statSync(filePath);
+
+        // Only process files (not directories)
+        if (stats.isFile() && file.endsWith('.log')) {
+          const fileAge = now - stats.mtime.getTime();
+
+          if (fileAge > retentionMs) {
+            try {
+              deletedSize += stats.size;
+              fs.unlinkSync(filePath);
+              deletedCount++;
+              console.info(
+                `[Log Cleanup] Deleted old log file: ${file} (${(stats.size / 1024 / 1024).toFixed(2)}MB)`
+              );
+            } catch (error) {
+              console.error(`[Log Cleanup] Failed to delete ${file}:`, error);
+            }
+          }
+        }
+      });
+
+      if (deletedCount > 0) {
+        console.info(
+          `[Log Cleanup] Cleanup completed: ${deletedCount} files deleted, ${(deletedSize / 1024 / 1024).toFixed(2)}MB freed`
+        );
+      }
+    } catch (error) {
+      console.error('[Log Cleanup] Error during log cleanup:', error);
+    }
+  }
+
   private buildLogger(config: ILoggerConfig): pino.Logger {
     const {
-      enableLoki = false,
-      lokiConfig = {
-        host: 'http://localhost:3100',
-        batchingEnabled: true,
-        batchInterval: 5,
-        labels: {},
-      },
       fileRotation = {
-        maxSize: '50m',
-        maxFiles: 10,
+        maxSize: '100m',
+        maxFiles: 15, // Keep 15 days of logs
+        frequency: 'daily',
+        retentionDays: 15,
       },
       logLevel = ENV.config?.nodeEnv === 'production' ? 'info' : 'debug',
     } = config;
 
     const logFolder = ENV.logFolder || './logs';
     const isDevelopment = ENV.config?.isDevelopment || ENV.config?.nodeEnv !== 'production';
+
+    // Schedule log cleanup on initialization
+    this.scheduleLogCleanup(logFolder, fileRotation.retentionDays || 15);
 
     const targets: any[] = [];
 
@@ -93,48 +163,25 @@ class LoggerManager {
         target: 'pino-roll',
         level: logLevel,
         options: {
-          file: `${logFolder}/app.log`,
-          frequency: 'daily',
+          file: `${logFolder}/app`,
+          frequency: fileRotation.frequency || 'daily',
           size: fileRotation.maxSize,
           mkdir: true,
+          extension: '.log',
         },
       },
       {
         target: 'pino-roll',
         level: 'error',
         options: {
-          file: `${logFolder}/error.log`,
-          frequency: 'daily',
+          file: `${logFolder}/error`,
+          frequency: fileRotation.frequency || 'daily',
           size: fileRotation.maxSize,
           mkdir: true,
+          extension: '.log',
         },
       }
     );
-
-    // Loki transport (if enabled) - with unique instance to prevent conflicts
-    if (enableLoki) {
-      targets.push({
-        target: 'pino-loki',
-        level: logLevel,
-        options: {
-          batching: lokiConfig.batchingEnabled,
-          interval: lokiConfig.batchInterval,
-          host: lokiConfig.host,
-          basicAuth: lokiConfig.basicAuth || undefined,
-          labels: {
-            service: ENV.serviceName || 'centinel-api',
-            environment: ENV.config?.nodeEnv || 'development',
-            version: ENV.appVersion || '1.0.0',
-            instance: `${ENV.serviceName}-${process.pid}-${Date.now()}`, // Unique instance ID
-            ...lokiConfig.labels,
-          },
-          replaceTimestamp: true,
-          convertArrays: false,
-          timeout: 30000,
-          silenceErrors: false,
-        },
-      });
-    }
 
     return pino({
       level: logLevel,
@@ -363,19 +410,11 @@ export class EnhancedLoggerService
     const isProduction = !isDevelopment;
 
     return {
-      enableLoki: isProduction && !!ENV.lokiHost,
-      lokiConfig: {
-        host: ENV.lokiHost || 'http://localhost:3100',
-        batchingEnabled: true,
-        batchInterval: 5,
-        labels: {
-          service: ENV.serviceName || 'centinel-api',
-          environment: ENV.config?.nodeEnv || 'development',
-        },
-      },
       fileRotation: {
-        maxSize: '50m',
-        maxFiles: 10,
+        maxSize: isProduction ? '100m' : '50m',
+        maxFiles: 15,
+        frequency: 'daily',
+        retentionDays: 15, // Auto-delete logs older than 15 days
       },
       logLevel: isProduction ? 'info' : 'debug',
       ...this.config,
@@ -407,21 +446,13 @@ export function createCustomLogger(config: ILoggerConfig = {}): IExtendedLoggerS
   return new EnhancedLoggerService(config);
 }
 
-export function createProductionLogger(lokiHost?: string): IExtendedLoggerService {
+export function createProductionLogger(): IExtendedLoggerService {
   return new EnhancedLoggerService({
-    enableLoki: !!lokiHost,
-    lokiConfig: {
-      host: lokiHost || 'http://localhost:3100',
-      batchingEnabled: true,
-      batchInterval: 5,
-      labels: {
-        service: ENV.serviceName || 'centinel-api',
-        environment: ENV.config?.nodeEnv || 'production',
-      },
-    },
     fileRotation: {
-      maxSize: '50m',
-      maxFiles: 10,
+      maxSize: '100m',
+      maxFiles: 15,
+      frequency: 'daily',
+      retentionDays: 15, // Auto-delete logs older than 15 days
     },
     logLevel: 'info',
   });

@@ -1,8 +1,8 @@
-import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { InternalBannerController } from "./controllers/internal/banner.internal.controller";
-import { Banner } from "./entities/banner.entity";
-import { BannerService } from "./services/banner.service";
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { InternalBannerController } from './controllers/internal/banner.internal.controller';
+import { Banner } from './entities/banner.entity';
+import { BannerService } from './services/banner.service';
 
 const entities = [Banner];
 const services = [BannerService];

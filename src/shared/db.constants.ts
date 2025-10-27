@@ -10,8 +10,10 @@ export enum ENUM_TABLE_NAMES {
   AUTH_STATS = 'auth_stats',
   FILE_STORAGES = 'file_storages',
 
-  MEETING_SESSION = 'meeting_session',
-  MEETING_SESSION_USER = 'meeting_session_user',
+  CATEGORIES = 'categories',
+  ARTICLES = 'articles',
+  BANNERS = 'banners',
+  AUTHORS = 'authors',
 }
 
 export enum ENUM_SEQUENCE {
@@ -28,6 +30,7 @@ export enum ENUM_COLUMN_TYPES {
   BOOLEAN = 'boolean',
   TIMESTAMP_UTC = 'timestamp without time zone',
   ENUM = 'enum',
+  JSONB = 'jsonb',
 }
 
 export const defaultDateTimeColumns: TableColumnOptions[] = [

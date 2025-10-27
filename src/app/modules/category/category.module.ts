@@ -1,8 +1,8 @@
-import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { InternalCategoryController } from "./controllers/internal/category.internal.controller";
-import { Category } from "./entities/category.entity";
-import { CategoryService } from "./services/category.service";
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { InternalCategoryController } from './controllers/internal/category.internal.controller';
+import { Category } from './entities/category.entity';
+import { CategoryService } from './services/category.service';
 
 const entities = [Category];
 const services = [CategoryService];

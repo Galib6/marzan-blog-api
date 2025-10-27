@@ -1,9 +1,9 @@
-import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { CategoryModule } from "../category/category.module";
-import { InternalAuthorController } from "./controllers/internal/author.internal.controller";
-import { Author } from "./entities/author.entity";
-import { AuthorService } from "./services/author.service";
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { CategoryModule } from '../category/category.module';
+import { InternalAuthorController } from './controllers/internal/author.internal.controller';
+import { Author } from './entities/author.entity';
+import { AuthorService } from './services/author.service';
 
 const entities = [Author];
 const services = [AuthorService];

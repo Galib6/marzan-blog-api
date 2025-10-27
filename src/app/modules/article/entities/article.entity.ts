@@ -1,11 +1,11 @@
-import { BaseEntity } from "@src/app/base";
-import { ENUM_COLUMN_TYPES, ENUM_TABLE_NAMES } from "@src/shared";
-import { Column, Entity, Index, JoinTable, ManyToMany } from "typeorm";
-import { Category } from "../../category/entities/category.entity";
+import { BaseEntity } from '@src/app/base';
+import { ENUM_COLUMN_TYPES, ENUM_TABLE_NAMES } from '@src/shared';
+import { Column, Entity, Index, JoinTable, ManyToMany } from 'typeorm';
+import { Category } from '../../category/entities/category.entity';
 
 @Entity(ENUM_TABLE_NAMES.ARTICLES)
 export class Article extends BaseEntity {
-  public static readonly SEARCH_TERMS: string[] = ["title"];
+  public static readonly SEARCH_TERMS: string[] = ['title'];
   @Index()
   @Column({ length: 500, type: ENUM_COLUMN_TYPES.VARCHAR, nullable: true })
   title?: string;
@@ -14,7 +14,7 @@ export class Article extends BaseEntity {
   @Column({ length: 256, type: ENUM_COLUMN_TYPES.VARCHAR, nullable: false })
   name?: string;
 
-  @ManyToMany((t) => Category)
+  @ManyToMany(() => Category)
   @JoinTable()
   categories?: Category[];
 

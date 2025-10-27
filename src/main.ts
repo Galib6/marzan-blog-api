@@ -19,29 +19,6 @@ async function bootstrap(): Promise<void> {
       : ['error', 'warn', 'debug', 'log', 'verbose'],
   });
 
-  // const kafkaOptions = KafkaFactory.createMicroserviceOptions();
-  // if (kafkaOptions) {
-  //   try {
-  //     app.connectMicroservice(kafkaOptions);
-  //     await app.startAllMicroservices();
-  //   } catch (error) {
-  //     console.error("❌ Failed to start Kafka microservice:", error);
-  //   }
-  // } else {
-  //   console.log("⚠️ Kafka is disabled or configuration is missing");
-  // }
-
-  // app.connectMicroservice<MicroserviceOptions>({
-  //   transport: Transport.RMQ,
-  //   options: {
-  //     urls: ["amqp://localhost:5672"],
-  //     queue: "test_queue",
-  //     queueOptions: { durable: false },
-  //   },
-  // });
-
-  // await app.startAllMicroservices();
-
   app.setBaseViewsDir(join(process.cwd(), 'views'));
   app.setViewEngine('hbs');
 
@@ -61,8 +38,13 @@ async function bootstrap(): Promise<void> {
   setupSwagger(app);
 
   await app.listen(ENV.config.port);
-  logger.log(`\n\n🚀🚀🚀Application is running on: ${await app.getUrl()} \n\n`);
+  const appUrl = await app.getUrl();
 
-  logger.log(`📖📖📖 Documentation is available on:  ${await app.getUrl()}/docs 📖📖📖`);
+  logger.log(`
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀  App running on: ${appUrl}
+📘  Docs: ${appUrl}/docs
+🌟  Welcome to ✨ MΛRZΛN BŁØG ✨
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 }
 bootstrap();

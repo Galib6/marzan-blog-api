@@ -1,6 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsInt, IsNumber, IsOptional } from "class-validator";
-import { Article } from "../../article/entities/article.entity";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsInt, IsNumber, IsOptional } from 'class-validator';
+import { Article } from '../../article/entities/article.entity';
 
 export class CreateBannerDTO {
   @ApiProperty({
@@ -12,7 +12,7 @@ export class CreateBannerDTO {
   article: Article;
 
   @ApiProperty({
-    description: "The order priority of the Banner",
+    description: 'The order priority of the Banner',
     required: false,
     default: 0,
   })
