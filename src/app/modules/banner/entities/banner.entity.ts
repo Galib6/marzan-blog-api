@@ -9,7 +9,10 @@ export class Banner extends BaseEntity {
 
   @OneToOne(() => Article)
   @JoinColumn()
-  article: Article;
+  article?: Article;
+
+  @Column({ type: ENUM_COLUMN_TYPES.UUID })
+  articleId: string;
 
   @Column({ nullable: true, default: 0, type: ENUM_COLUMN_TYPES.INT })
   orderPriority?: number;

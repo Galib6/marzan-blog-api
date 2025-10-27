@@ -174,7 +174,7 @@ export class UserService extends BaseService<User> {
 
   async findOrCreateByPhoneNumber(phoneNumber: string): Promise<User> {
     const role = await this.roleService.findOneBase({
-      title: ENUM_ACL_DEFAULT_ROLES.CUSTOMER,
+      title: ENUM_ACL_DEFAULT_ROLES.WEB_USER,
     });
     const isExist = await this.findOneBase({ phoneNumber });
 

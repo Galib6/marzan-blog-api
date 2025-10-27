@@ -35,8 +35,8 @@ export default class UserSeeder {
       });
       await this.dataSource.manager.save(
         Object.assign(new UserRole(), {
-          role: superAdminRole.id,
-          user: createdSuperAdmin?.id,
+          roleId: superAdminRole.id,
+          userId: createdSuperAdmin?.id,
         })
       );
     }

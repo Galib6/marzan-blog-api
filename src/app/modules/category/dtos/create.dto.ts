@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import { BaseCreateDTO } from '@src/app/base';
+import { IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
 
-export class CreateCategoryDTO {
+export class CreateCategoryDTO extends BaseCreateDTO {
   @ApiProperty({
     description: 'The title of the category',
     maxLength: 500,
@@ -37,8 +38,4 @@ export class CreateCategoryDTO {
   @IsInt()
   @IsOptional()
   orderPriority?: number;
-
-  @IsOptional()
-  @IsNumber()
-  readonly createdBy!: any;
 }

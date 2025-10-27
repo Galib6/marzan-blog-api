@@ -2,7 +2,6 @@ import { ENUM_AUTH_PROVIDERS } from '@src/app/enums/common.enums';
 import { ENUM_COLUMN_TYPES, ENUM_TABLE_NAMES } from '@src/shared';
 import { Type } from 'class-transformer';
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, RelationId } from 'typeorm';
-import { Role } from '../../acl/entities/role.entity';
 import { UserRole } from './userRole.entity';
 
 @Entity(ENUM_TABLE_NAMES.USERS)
@@ -57,7 +56,7 @@ export class User {
   @Type(() => User)
   createdBy?: User;
 
-  @Column({ type: ENUM_COLUMN_TYPES.UUID })
+  @Column({ type: ENUM_COLUMN_TYPES.UUID, nullable: true })
   @RelationId((e: User) => e.createdBy)
   createdById?: string;
 
@@ -65,12 +64,13 @@ export class User {
   @Type(() => User)
   updatedBy?: User;
 
-  @Column({ type: ENUM_COLUMN_TYPES.UUID })
+  @Column({ type: ENUM_COLUMN_TYPES.UUID, nullable: true })
   @RelationId((e: User) => e.updatedBy)
   updatedById?: string;
 
   @Column({ type: ENUM_COLUMN_TYPES.BOOLEAN, default: true, nullable: true })
   isActive?: boolean;
 
-  roles?: Role[] = [];
+  @OneToMany(() => UserRole, (e) => e.user)
+  roles?: UserRole[];
 }

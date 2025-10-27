@@ -5,7 +5,7 @@ export class LoginDTO {
   @ApiProperty({
     type: String,
     required: true,
-    example: 'superadmin@meet.com',
+    example: 'galib@gmail.com',
   })
   @IsNotEmpty()
   @IsEmail()

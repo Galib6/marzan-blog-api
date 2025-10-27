@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import { BaseCreateDTO } from '@src/app/base';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
-export class CreateAuthorDTO {
+export class CreateAuthorDTO extends BaseCreateDTO {
   @ApiProperty({ description: 'The name of the author', maxLength: 256 })
   @IsString()
   @MaxLength(256)
@@ -59,8 +60,4 @@ export class CreateAuthorDTO {
   @IsString()
   @IsOptional()
   description?: string;
-
-  @IsOptional()
-  @IsNumber()
-  readonly createdBy!: any;
 }

@@ -38,8 +38,6 @@ export class ArticleService extends BaseService<Article> {
         },
       });
       article.categories = categoryItems;
-    } else {
-      article.categories = [];
     }
 
     // Save the updated article

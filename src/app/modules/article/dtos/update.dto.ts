@@ -1,9 +1,8 @@
-import { OmitType, PartialType } from '@nestjs/swagger';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IntersectionType, PartialType } from '@nestjs/swagger';
+import { BaseUpdateDTO } from '@src/app/base';
 import { CreateArticleDTO } from './create.dto';
 
-export class UpdateArticleDTO extends PartialType(OmitType(CreateArticleDTO, ['createdBy'])) {
-  @IsOptional()
-  @IsNumber()
-  readonly updatedBy!: any;
-}
+export class UpdateArticleDTO extends IntersectionType(
+  PartialType(CreateArticleDTO),
+  BaseUpdateDTO
+) {}

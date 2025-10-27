@@ -3,11 +3,11 @@ import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { PathsObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import { ENV } from './env';
 
-function filterInternalRoutes(doc: OpenAPIObject, _tag): OpenAPIObject {
+function filterInternalRoutes(doc: OpenAPIObject, tag): any {
   const publicDoc = structuredClone(doc);
   const paths: PathsObject = {};
   Object.entries(publicDoc.paths).map(([k, path]) => {
-    if (k.includes('/web/')) {
+    if (k.includes(`/${tag}/`)) {
       paths[k] = path;
     }
   });
@@ -32,6 +32,8 @@ export function setupSwagger(app: INestApplication): void {
     .build();
   const document = SwaggerModule.createDocument(app, options);
   const publicDoc = filterInternalRoutes(document, 'web');
+  const internalPath = filterInternalRoutes(document, 'internal');
   SwaggerModule.setup('/docs', app, document, defaultSwaggerOpts);
   SwaggerModule.setup('/docs/web', app, publicDoc, defaultSwaggerOpts);
+  SwaggerModule.setup('/docs/internal', app, internalPath, defaultSwaggerOpts);
 }

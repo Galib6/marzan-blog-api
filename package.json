@@ -27,6 +27,7 @@
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "db:seed": "ts-node dist/database/seeds/seed.js",
     "db:drop": "yarn typeorm schema:drop -d dist/database/ormconfig.js",
+    "migration:auto": "yarn migration:generate && yarn migration:run",
     "migration:create": "ts-node ./src/database/scripts/migration.create.ts",
     "migration:generate": "ts-node ./src/database/scripts/migration.generate.ts",
     "migration:run": "yarn typeorm migration:run -d ./src/database/data-source.ts",

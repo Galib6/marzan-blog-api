@@ -1,15 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNumber, IsOptional } from 'class-validator';
-import { Article } from '../../article/entities/article.entity';
+import { BaseCreateDTO } from '@src/app/base';
+import { IsInt, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
-export class CreateBannerDTO {
+export class CreateBannerDTO extends BaseCreateDTO {
   @ApiProperty({
-    type: Number,
-    example: 1,
+    type: String,
+    example: 'a8f18971-4046-4e7a-bfc8-c5d1a6f9107b',
   })
-  @IsNumber()
-  @IsOptional()
-  article: Article;
+  @IsUUID()
+  @IsNotEmpty()
+  articleId: string;
 
   @ApiProperty({
     description: 'The order priority of the Banner',
@@ -19,8 +19,4 @@ export class CreateBannerDTO {
   @IsInt()
   @IsOptional()
   orderPriority?: number;
-
-  @IsOptional()
-  @IsNumber()
-  readonly createdBy!: any;
 }

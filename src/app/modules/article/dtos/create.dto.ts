@@ -1,12 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { BaseCreateDTO } from '@src/app/base';
 import { Type } from 'class-transformer';
 import {
   IsArray,
   IsInt,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
@@ -15,14 +16,14 @@ import { Category } from '../../category/entities/category.entity';
 export class ArticleCategoryCreateDTO {
   @ApiProperty({
     type: Number,
-    example: 1,
+    example: '9d7f3431-a8a8-4087-b3b0-deea7e92660e',
   })
-  @IsNumber()
+  @IsUUID()
   @IsNotEmpty()
   id: string;
 }
 
-export class CreateArticleDTO {
+export class CreateArticleDTO extends BaseCreateDTO {
   @ApiProperty({
     description: 'The title of the article',
     maxLength: 500,
@@ -83,8 +84,4 @@ export class CreateArticleDTO {
   @IsInt()
   @IsOptional()
   orderPriority?: number;
-
-  @IsOptional()
-  @IsNumber()
-  readonly createdBy!: any;
 }
