@@ -9,7 +9,6 @@ export default class RoleSeeder {
     const isSuperAdminRoleExist = await this.dataSource.manager.findOne(Role, {
       where: { title: ENUM_ACL_DEFAULT_ROLES.SUPER_ADMIN },
     });
-
     if (!isSuperAdminRoleExist) {
       await this.dataSource.manager.save(
         Object.assign(new Role(), {

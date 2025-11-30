@@ -27,6 +27,7 @@ export class CreateCategoryDTO extends BaseCreateDTO {
     uniqueItems: true,
   })
   @IsString()
+  @IsOptional()
   @MaxLength(256)
   slug: string;
 

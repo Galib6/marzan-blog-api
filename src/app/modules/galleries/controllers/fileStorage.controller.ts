@@ -20,7 +20,7 @@ import { FileUploadService } from '../services/fileUpload.service';
 
 @ApiTags('File Storage')
 @ApiBearerAuth()
-@Controller('files')
+@Controller('internal/files')
 export class FileStorageController {
   constructor(private readonly fileUploadService: FileUploadService) {}
 

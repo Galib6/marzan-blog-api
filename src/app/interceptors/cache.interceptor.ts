@@ -11,7 +11,7 @@ import { Reflector } from '@nestjs/core';
 import { ENV } from '@src/env';
 import { Observable, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
-import { RedisService } from '../modules/redis/redisCache.service';
+import { RedisService } from '../modules/redis/redis.service';
 
 @Injectable()
 export class CacheInterceptor implements NestInterceptor {

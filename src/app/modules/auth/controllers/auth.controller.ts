@@ -20,7 +20,7 @@ import { AuthService } from '../services/auth.service';
 @ApiTags('Auth')
 // @ApiBearerAuth()
 @Auth(AuthType.None)
-@Controller('auth')
+@Controller('internal/auth')
 export class AuthController {
   constructor(private readonly service: AuthService) {}
 

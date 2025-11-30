@@ -39,7 +39,7 @@ export class InternalCategoryController {
   }
 
   @Delete(':id')
-  async deleteOne(@Param('id') id: number): Promise<SuccessResponse> {
-    return this.service.softDeleteOneBase(id);
+  async deleteOne(@Param('id') id: string): Promise<SuccessResponse> {
+    return this.service.deleteOneBase(id);
   }
 }

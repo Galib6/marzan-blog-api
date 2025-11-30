@@ -1,7 +1,7 @@
 {
   "workbench.colorCustomizations": {},
   "peacock.color": "#03b8be",
-  "cSpell.words": ["algalib", "centinel", "informations", "Wagehat"],
+  "cSpell.words": ["algalib", "centinel", "informations"],
   "eslint.useFlatConfig": true,
   "eslint.debug": true,
   "eslint.options": {

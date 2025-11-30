@@ -22,7 +22,7 @@ import { UserService } from '../services/user.service';
 
 @ApiTags('User')
 @ApiBearerAuth()
-@Controller('users')
+@Controller('internal/users')
 @UseInterceptors(CacheInterceptor)
 export class UserController {
   RELATIONS = ['userRoles', 'userRoles.role'];
