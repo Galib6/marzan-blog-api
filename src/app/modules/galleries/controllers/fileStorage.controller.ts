@@ -10,7 +10,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { Auth } from '@src/app/decorators';
+import { AuthType } from '@src/app/enums/auth-type.enum';
 import { IFileMeta } from '@src/app/interfaces';
 import { SuccessResponse } from '@src/app/types';
 import { storageImageOptions } from '@src/shared/file.constants';
@@ -19,7 +21,8 @@ import { UploadFileDto } from '../dtos/fileStorage/uploadFile.dto';
 import { FileUploadService } from '../services/fileUpload.service';
 
 @ApiTags('File Storage')
-@ApiBearerAuth()
+// @ApiBearerAuth()
+@Auth(AuthType.None)
 @Controller('internal/files')
 export class FileStorageController {
   constructor(private readonly fileUploadService: FileUploadService) {}
@@ -38,6 +41,12 @@ export class FileStorageController {
     @Body() body: UploadFileDto
   ): Promise<SuccessResponse> {
     return this.fileUploadService.uploadImage(files, body);
+  }
+
+  @Auth(AuthType.None)
+  @Delete('bulk')
+  async deleteMany(): Promise<SuccessResponse> {
+    return this.fileUploadService.deleteFiles();
   }
 
   @Delete(':id')

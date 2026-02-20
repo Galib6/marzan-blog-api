@@ -38,6 +38,10 @@ export class CacheInterceptor implements NestInterceptor {
       return next.handle();
     }
 
+    // if(!ENV.config.isProduction){
+    //   return next.handle();
+    // }
+
     const cacheKeyPrefix = this.reflector.get<string>('cacheKey', handler);
     if (!cacheKeyPrefix) {
       this.logger.error(`Cache key not found, API End point: ${request?.url}`);

@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { BaseUpdateDTO } from '@src/app/base';
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
-export class UpdateRoleDTO {
+export class UpdateRoleDTO extends BaseUpdateDTO {
   @ApiProperty({
     type: String,
     required: false,

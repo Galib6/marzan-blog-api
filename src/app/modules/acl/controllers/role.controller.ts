@@ -15,7 +15,7 @@ import { AddPermissionsDTO } from './../dtos/role/addPermissions.dto';
 
 @ApiTags('Role')
 @ApiBearerAuth()
-@Controller('roles')
+@Controller('internal/roles')
 export class RoleController {
   RELATIONS = [];
   constructor(private readonly service: RoleService) {}

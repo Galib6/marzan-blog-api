@@ -1,19 +1,19 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { SuccessResponse } from '@src/app/types';
-import { CreateCategoryDTO } from '../../dtos/create.dto';
-import { FilterCategoryDTO } from '../../dtos/filter.dto';
-import { UpdateCategoryDTO } from '../../dtos/update.dto';
-import { Category } from '../../entities/category.entity';
-import { CategoryService } from '../../services/category.service';
+import { CreateTopicDTO } from '../../dtos/create.dto';
+import { FilterTopicDTO } from '../../dtos/filter.dto';
+import { UpdateTopicDTO } from '../../dtos/update.dto';
+import { Topic } from '../../entities/topic.entity';
+import { TopicService } from '../../services/topic.service';
 
-@ApiTags('Category')
+@ApiTags('Topic')
 @ApiBearerAuth()
-@Controller('internal/categories')
-export class InternalCategoryController {
+@Controller('internal/topics')
+export class InternalTopicController {
   RELATIONS = [];
 
-  constructor(private readonly service: CategoryService) {}
+  constructor(private readonly service: TopicService) {}
 
   @Get('group-by-article')
   async groupByArticle(): Promise<{ id: string; title?: string; articleCount: number }[]> {
@@ -21,25 +21,25 @@ export class InternalCategoryController {
   }
 
   @Get()
-  async findAll(@Query() query: FilterCategoryDTO): Promise<SuccessResponse | Category[]> {
+  async findAll(@Query() query: FilterTopicDTO): Promise<SuccessResponse | Topic[]> {
     return this.service.findAllBase(query, { relations: this.RELATIONS });
   }
 
   @Get(':id')
-  async findById(@Param('id') id: string): Promise<Category> {
+  async findById(@Param('id') id: string): Promise<Topic> {
     return this.service.findByIdBase(id, { relations: this.RELATIONS });
   }
 
   @Post()
   async createOne(
-    @Body() body: CreateCategoryDTO
+    @Body() body: CreateTopicDTO
     // @ActiveUser() authUser: IActiveUser
-  ): Promise<Category> {
+  ): Promise<Topic> {
     return this.service.createOneBase(body, { relations: this.RELATIONS });
   }
 
   @Patch(':id')
-  async updateOne(@Param('id') id: string, @Body() body: UpdateCategoryDTO): Promise<Category> {
+  async updateOne(@Param('id') id: string, @Body() body: UpdateTopicDTO): Promise<Topic> {
     return this.service.updateOneBase(id, body, { relations: this.RELATIONS });
   }
 

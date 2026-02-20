@@ -22,13 +22,13 @@ import { ArticleService } from '../../services/article.service';
 @ApiBearerAuth()
 @Controller('internal/articles')
 export class InternalArticleController {
-  RELATIONS = ['categories'];
+  RELATIONS = ['categories', 'topics'];
 
   constructor(private readonly service: ArticleService) {}
 
   @Get()
   async findAll(@Query() query: FilterArticleDTO): Promise<SuccessResponse | Article[]> {
-    return this.service.findAllBase(query, { relations: this.RELATIONS });
+    return this.service.findAllWithFilter(query, { relations: this.RELATIONS });
   }
 
   @Get(':id')

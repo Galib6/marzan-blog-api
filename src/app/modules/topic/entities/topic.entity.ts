@@ -3,8 +3,8 @@ import { ENUM_COLUMN_TYPES, ENUM_TABLE_NAMES } from '@src/shared';
 import { Column, Entity, Index, ManyToMany } from 'typeorm';
 import { Article } from '../../article/entities/article.entity';
 
-@Entity(ENUM_TABLE_NAMES.CATEGORIES)
-export class Category extends BaseEntity {
+@Entity(ENUM_TABLE_NAMES.TOPICS)
+export class Topic extends BaseEntity {
   public static readonly SEARCH_TERMS: string[] = ['title'];
   @Index()
   @Column({ length: 500, type: ENUM_COLUMN_TYPES.VARCHAR, nullable: true })
@@ -23,6 +23,6 @@ export class Category extends BaseEntity {
   @Column({ nullable: true, default: 0, type: ENUM_COLUMN_TYPES.INT })
   orderPriority?: number;
 
-  @ManyToMany(() => Article, (article) => article.categories)
+  @ManyToMany(() => Article, (article) => article.topics)
   articles?: Article[];
 }

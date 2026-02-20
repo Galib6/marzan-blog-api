@@ -2,6 +2,7 @@ import { BaseEntity } from '@src/app/base';
 import { ENUM_COLUMN_TYPES, ENUM_TABLE_NAMES } from '@src/shared';
 import { Column, Entity, Index, JoinTable, ManyToMany } from 'typeorm';
 import { Category } from '../../category/entities/category.entity';
+import { Topic } from '../../topic/entities/topic.entity';
 
 @Entity(ENUM_TABLE_NAMES.ARTICLES)
 export class Article extends BaseEntity {
@@ -14,9 +15,13 @@ export class Article extends BaseEntity {
   @Column({ length: 256, type: ENUM_COLUMN_TYPES.VARCHAR, nullable: false })
   name?: string;
 
-  @ManyToMany(() => Category)
+  @ManyToMany(() => Category, (category) => category.articles)
   @JoinTable()
   categories?: Category[];
+
+  @ManyToMany(() => Topic, (topic) => topic.articles)
+  @JoinTable()
+  topics?: Topic[];
 
   @Column({ type: ENUM_COLUMN_TYPES.VARCHAR, nullable: false })
   summary?: string;
@@ -24,7 +29,7 @@ export class Article extends BaseEntity {
   @Column({ length: 256, type: ENUM_COLUMN_TYPES.VARCHAR, nullable: false })
   thumb: string;
 
-  @Column({ type: ENUM_COLUMN_TYPES.JSONB, nullable: false })
+  @Column({ type: ENUM_COLUMN_TYPES.JSONB, nullable: true })
   content: any;
 
   @Column({

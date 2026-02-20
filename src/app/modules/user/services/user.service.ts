@@ -114,6 +114,7 @@ export class UserService extends BaseService<User> {
 
     try {
       if (isNotEmptyObject(userData)) {
+        if (!userData?.password) delete userData.password;
         await queryRunner.manager.update(User, { id }, userData);
       }
 

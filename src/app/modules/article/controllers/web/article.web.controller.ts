@@ -1,0 +1,25 @@
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { SuccessResponse } from '@src/app/types';
+import { FilterArticleDTO } from '../../dtos/filter.dto';
+import { Article } from '../../entities/article.entity';
+import { ArticleService } from '../../services/article.service';
+
+@ApiTags('Articles')
+@ApiBearerAuth()
+@Controller('web/articles')
+export class WebArticleController {
+  RELATIONS = ['categories', 'topics'];
+
+  constructor(private readonly service: ArticleService) {}
+
+  @Get()
+  async findAll(@Query() query: FilterArticleDTO): Promise<SuccessResponse | Article[]> {
+    return this.service.findAllWithFilter(query, { relations: this.RELATIONS });
+  }
+
+  @Get(':id')
+  async findById(@Param('id') id: string): Promise<Article> {
+    return this.service.findByIdBase(id, { relations: this.RELATIONS });
+  }
+}

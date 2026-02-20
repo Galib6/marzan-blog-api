@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CacheKey } from '@src/app/decorators/cacheKey.decorator';
+import { CacheRevalidateKeys } from '@src/app/decorators/cacheRevalidate.decorator';
 import { CacheTTL } from '@src/app/decorators/cacheTTL.decorator';
 import { CacheInterceptor } from '@src/app/interceptors/cache.interceptor';
 import { SuccessResponse } from '@src/app/types';
@@ -46,6 +47,7 @@ export class UserController {
     return this.service.findByIdBase(id, { relations: this.RELATIONS });
   }
 
+  @CacheRevalidateKeys(['users:user_list'])
   @Post()
   async createOne(@Body() body: CreateUserDTO): Promise<User> {
     return this.service.createUser(body, this.RELATIONS);
@@ -56,11 +58,13 @@ export class UserController {
   //     return this.service.recoverByIdBase(id);
   //   }
 
+  @CacheRevalidateKeys(['users:user_list'])
   @Patch(':id')
   async updateOne(@Param('id') id: string, @Body() body: UpdateUserDTO): Promise<User> {
     return this.service.updateUser(id, body, this.RELATIONS);
   }
 
+  @CacheRevalidateKeys(['users:user_list'])
   @Delete(':id')
   async deleteOne(@Param('id') id: string): Promise<SuccessResponse> {
     return this.service.deleteOneBase(id);

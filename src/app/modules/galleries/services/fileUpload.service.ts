@@ -1,4 +1,9 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  PutObjectCommandInput,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { IFileMeta } from '@src/app/interfaces';
@@ -71,7 +76,7 @@ export class FileUploadService {
     folder?: string;
     createdBy?: User;
   }): Promise<FileStorage> {
-    const { file, folder = 'others' } = data;
+    const { file, folder = 'staging' } = data;
     // Return null if no file is provided
     if (!file) return null;
 
@@ -86,6 +91,7 @@ export class FileUploadService {
       // Step 1: Create an S3 client
       const s3 = new S3Client({
         region: ENV.fileStorage.s3Region,
+
         credentials: {
           accessKeyId: ENV.fileStorage.s3AccessKey,
           secretAccessKey: ENV.fileStorage.s3SecretKey,
@@ -95,11 +101,12 @@ export class FileUploadService {
       });
 
       // Step 2: Prepare the upload parameters
-      const uploadParams = {
+      const uploadParams: PutObjectCommandInput = {
         Bucket: ENV.fileStorage.s3Bucket,
         Key: `${ENV.fileStorage.folderPrefix}/${folder}/${file.filename}`,
         Body: fs.createReadStream(filePath),
         ContentType: file.mimetype,
+        ACL: 'public-read',
       };
 
       // Step 3: Upload file to S3
@@ -135,7 +142,10 @@ export class FileUploadService {
       // Return null if the file was not uploaded successfully
       return null;
     } catch (error) {
-      await fs.unlinkSync(join(process.cwd(), filePath));
+      const fullPath = join(process.cwd(), filePath);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
       console.error('Error during file upload:', error);
       return null;
     }
@@ -189,6 +199,48 @@ export class FileUploadService {
   // }
 
   async deleteFile(id: string): Promise<SuccessResponse> {
+    const file = await this.fileStorageService.isExist({ id } as any);
+    await this.deleteFromS3(file);
     return await this.fileStorageService.deleteOneBase(id);
+  }
+
+  async deleteFiles(): Promise<SuccessResponse> {
+    const deleted = [];
+
+    const files = await this.fileStorageService.find({});
+    await asyncForEach(files, async (file: FileStorage) => {
+      if (file) {
+        await this.deleteFromS3(file);
+        await this.fileStorageService.deleteOneBase(file?.id);
+        deleted.push(file?.id);
+      }
+    });
+
+    return new SuccessResponse(`${deleted.length} file(s) deleted successfully`, { deleted });
+  }
+
+  private getS3Client(): S3Client {
+    return new S3Client({
+      region: ENV.fileStorage.s3Region,
+      credentials: {
+        accessKeyId: ENV.fileStorage.s3AccessKey,
+        secretAccessKey: ENV.fileStorage.s3SecretKey,
+      },
+      endpoint: `https://${ENV.fileStorage.s3EndPoint}`,
+      forcePathStyle: false,
+    });
+  }
+
+  private async deleteFromS3(file: FileStorage): Promise<void> {
+    try {
+      const s3 = this.getS3Client();
+      const command = new DeleteObjectCommand({
+        Bucket: ENV.fileStorage.s3Bucket,
+        Key: `${file.folder}/${file.fileName}`,
+      });
+      await s3.send(command);
+    } catch (error) {
+      console.error(`Error deleting file ${file.fileName} from S3:`, error);
+    }
   }
 }

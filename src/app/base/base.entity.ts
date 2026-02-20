@@ -31,7 +31,7 @@ export abstract class BaseEntity {
   @Type(() => User)
   createdBy?: User;
 
-  @Column({ type: ENUM_COLUMN_TYPES.UUID })
+  @Column({ type: ENUM_COLUMN_TYPES.UUID, nullable: true })
   @RelationId((e: BaseEntity) => e.createdBy)
   createdById?: string;
 

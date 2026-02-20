@@ -12,8 +12,19 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Category } from '../../category/entities/category.entity';
+import { Topic } from '../../topic/entities/topic.entity';
 
 export class ArticleCategoryCreateDTO {
+  @ApiProperty({
+    type: Number,
+    example: '9d7f3431-a8a8-4087-b3b0-deea7e92660e',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  id: string;
+}
+
+export class ArticleTopicCreateDTO {
   @ApiProperty({
     type: Number,
     example: '9d7f3431-a8a8-4087-b3b0-deea7e92660e',
@@ -44,6 +55,17 @@ export class CreateArticleDTO extends BaseCreateDTO {
   @Type(() => ArticleCategoryCreateDTO)
   @IsOptional()
   categories?: Category[];
+
+  @ApiProperty({
+    description: 'The topics of the article',
+    type: [ArticleTopicCreateDTO],
+    required: false,
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ArticleTopicCreateDTO)
+  @IsOptional()
+  topics?: Topic[];
 
   @ApiProperty({ description: 'The name of the article', maxLength: 256 })
   @IsString()

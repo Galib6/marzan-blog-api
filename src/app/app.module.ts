@@ -18,6 +18,7 @@ import { BannerModule } from './modules/banner/banner.module';
 import { CategoryModule } from './modules/category/category.module';
 import { GalleryModule } from './modules/galleries/gallery.module';
 import { RedisModule } from './modules/redis/redis.module';
+import { TopicModule } from './modules/topic/topic.module';
 import { LogCleanupService } from './services/log-cleanup.service';
 
 const MODULES = [
@@ -28,6 +29,7 @@ const MODULES = [
   RedisModule,
   ArticleModule,
   CategoryModule,
+  TopicModule,
   AuthorModule,
   BannerModule,
 ];

@@ -11,6 +11,7 @@ export enum ENUM_TABLE_NAMES {
   FILE_STORAGES = 'file_storages',
 
   CATEGORIES = 'categories',
+  TOPICS = 'topics',
   ARTICLES = 'articles',
   BANNERS = 'banners',
   AUTHORS = 'authors',

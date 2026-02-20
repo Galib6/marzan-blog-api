@@ -7,7 +7,7 @@ import { PermissionService } from '../services/permission.service';
 
 @ApiTags('Permission')
 @ApiBearerAuth()
-@Controller('permissions')
+@Controller('internal/permissions')
 export class PermissionController {
   RELATIONS = ['permissionType'];
   constructor(private readonly service: PermissionService) {}
