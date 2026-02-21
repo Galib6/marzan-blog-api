@@ -11,10 +11,6 @@ export class Article extends BaseEntity {
   @Column({ length: 500, type: ENUM_COLUMN_TYPES.VARCHAR, nullable: true })
   title?: string;
 
-  @Index()
-  @Column({ length: 256, type: ENUM_COLUMN_TYPES.VARCHAR, nullable: false })
-  name?: string;
-
   @ManyToMany(() => Category, (category) => category.articles)
   @JoinTable()
   categories?: Category[];
@@ -41,4 +37,7 @@ export class Article extends BaseEntity {
 
   @Column({ nullable: true, default: 0, type: ENUM_COLUMN_TYPES.INT })
   orderPriority?: number;
+
+  @Column({ type: ENUM_COLUMN_TYPES.BOOLEAN, default: true, nullable: true })
+  isFeatured?: boolean;
 }

@@ -3,6 +3,7 @@ import { BaseCreateDTO } from '@src/app/base';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -67,11 +68,6 @@ export class CreateArticleDTO extends BaseCreateDTO {
   @IsOptional()
   topics?: Topic[];
 
-  @ApiProperty({ description: 'The name of the article', maxLength: 256 })
-  @IsString()
-  @MaxLength(256)
-  name: string;
-
   @ApiProperty({ description: 'The summary of the article', maxLength: 256 })
   @IsString()
   @MaxLength(256)
@@ -106,4 +102,13 @@ export class CreateArticleDTO extends BaseCreateDTO {
   @IsInt()
   @IsOptional()
   orderPriority?: number;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  readonly isFeatured: boolean;
 }
